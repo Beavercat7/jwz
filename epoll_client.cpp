@@ -66,7 +66,7 @@ int main(int argc,char*argv[])
           fgets(message,BUF_SIZE,stdin);
 
           //客户端输出exit,退出
-          if(strncasecmp(message,EXIT,strlen(EXIT)))
+          if(strncasecmp(message,EXIT,strlen(EXIT))== 0)
           isClientwork = 0;
           else   //子进程将信息写入管道
           {
