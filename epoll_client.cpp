@@ -12,7 +12,7 @@ int main(int argc,char*argv[])
     int sock = socket(PF_INET,SOCK_STREAM,0);
     if(sock < 0)
     {
-        perror("connect error");
+        perror("sock error");
         exit(-1);
     }
     //连接服务器
@@ -70,6 +70,7 @@ int main(int argc,char*argv[])
           isClientwork = 0;
           else   //子进程将信息写入管道
           {
+            printf("write: 73\n");
             if(write(pipe_fd[1],message,strlen(message) -1)<0)
             {
                 perror("fork error");
@@ -97,14 +98,21 @@ int main(int argc,char*argv[])
             if(events[i].data.fd == sock)
             {
                 //接受服务端信息
+                printf("error: 101\n");
+               
                 int ret = recv(sock,message,BUF_SIZE,0);
-
+                printf("message: %s\n",message);
                 //ret = 0 服务端关闭
                 if(ret == 0)
                 {
                     printf("Server closed connnection: %d\n",sock);
                     close(sock);
                     isClientwork = 0;
+                }
+                else if(ret == -1)
+                {
+                    perror("recv error");
+                    exit(-1);
                 }
                 else printf("%s\n",message);
             }
@@ -113,7 +121,8 @@ int main(int argc,char*argv[])
             {
                 //父进程从管道中读取数据
                 int ret = read(events[i].data.fd,message,BUF_SIZE);
-
+                printf("error: 118\n");
+                printf("message: %s\n",message);
                 //ret = 0;
                 if(ret == 0)isClientwork = 0;
                 else //将信息发送给服务器
