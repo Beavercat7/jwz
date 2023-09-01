@@ -35,10 +35,10 @@ int main(int argc,char*argv[])
     //可以把这个函数封装起来
     if(epfd < 0)
     {
-        perror("listen error");
+        perror("epfd error");
         exit(-1);
     }
-    printf("epoll created,epollfd = %d\n",epfd);
+    printf("epoll created, epollfd = %d\n",epfd);
     static struct epoll_event events[EPOLL_SIZE];
     //往内核事件表里添加事件
     addFd(epfd,listener,true);
@@ -64,6 +64,11 @@ int main(int argc,char*argv[])
             struct sockaddr_in client_address;
             socklen_t client_addrlength = sizeof(struct sockaddr_in);
             int clientfd = accept(listener,(struct sockaddr*)&client_address,&client_addrlength);  
+            if(clientfd == -1)
+            {
+               perror("accept error");
+               exit(-1);
+            }
             printf("client connection from: %s : %d(IP : port),clientfd = %d \n",inet_ntoa(client_address.sin_addr),ntohs(client_address.sin_port),clientfd);
 
             addFd(epfd,clientfd,true);//把这个新的客户端添加到内核事件列表
@@ -71,7 +76,7 @@ int main(int argc,char*argv[])
             //服务端用list保存用户连接
             clients_list.push_back(clientfd);
             printf("Add new clientfd = %d to epoll\n",clientfd);
-            printf("Now there are %d clients int the chat room",(int)clients_list.size());
+            printf("Now there are %d clients int the chat room\n",(int)clients_list.size());
 
             //服务端发送欢迎信息
             printf("welcome message\n");
@@ -79,12 +84,14 @@ int main(int argc,char*argv[])
             bzero(message,BUF_SIZE);
             sprintf(message,SERVER_WELCOME,clientfd);
             int ret = send(clientfd,message,BUF_SIZE,0);
+            printf("message: %s\n",message);
             if(ret < 0)
             {
                 perror("send error");
                 exit(-1);
             }
         }
+        //客户端唤醒 处理用户发来的信息,并广播,使其他用户收到信息
         else 
         {
             int ret = sendBroadcastmessage(sockfd);
